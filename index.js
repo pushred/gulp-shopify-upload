@@ -124,7 +124,7 @@ shopify._setOptions = function(options) {
  * @param {string} filepath
  * @param {Function} done
  */
-shopify.upload = function(filepath, file, host, base, themeid) {
+shopify.upload = function(filepath, file, host, base, themeid, cb) {
 
     var api = shopifyAPI,
         themeId = themeid,
@@ -154,6 +154,7 @@ shopify.upload = function(filepath, file, host, base, themeid) {
         } else {
           console.log('Error undefined! ' + err.type);
         }
+        cb();
     }
 
     if (themeId) {
@@ -190,15 +191,18 @@ function gulpShopifyUpload(apiKey, password, host, themeid, options) {
       return cb();
     }
 
+    var self = this;
+
     if (file.isBuffer()) {
-      shopify.upload(file.path, file, host, '', themeid);
+      shopify.upload(file.path, file, host, '', themeid, function(){
+        // make sure the file goes through the next gulp plugin
+        self.push(file);
+
+        // tell the stream engine that we are done with this file
+        cb();
+      });
     }
 
-    // make sure the file goes through the next gulp plugin
-    this.push(file);
-
-    // tell the stream engine that we are done with this file
-    cb();
   });
 
   // returning the file stream
